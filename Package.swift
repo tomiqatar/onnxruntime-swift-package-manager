@@ -25,9 +25,6 @@ let package = Package(
         .library(name: "onnxruntime",
                  type: .static,
                  targets: ["OnnxRuntimeBindings"]),
-        .library(name: "onnxruntime_extensions",
-                 type: .static,
-                 targets: ["OnnxRuntimeExtensions"]),
     ],
     dependencies: [],
     targets: [
@@ -50,18 +47,6 @@ let package = Package(
                     path: "swift/OnnxRuntimeBindingsTests",
                     resources: [
                         .copy("Resources/single_add.basic.ort")
-                    ]),
-        .target(name: "OnnxRuntimeExtensions",
-                dependencies: ["onnxruntime_extensions", "onnxruntime"],
-                path: "extensions",
-                cxxSettings: [
-                    .define("ORT_SWIFT_PACKAGE_MANAGER_BUILD"),
-                ]),
-        .testTarget(name: "OnnxRuntimeExtensionsTests",
-                    dependencies: ["OnnxRuntimeExtensions", "OnnxRuntimeBindings"],
-                    path: "swift/OnnxRuntimeExtensionsTests",
-                    resources: [
-                        .copy("Resources/decode_image.onnx")
                     ]),
     ],
     cxxLanguageStandard: .cxx17
@@ -95,20 +80,11 @@ if let pod_archive_path = ProcessInfo.processInfo.environment["ORT_POD_LOCAL_PAT
     // ORT release
     package.targets.append(
        Target.binaryTarget(name: "onnxruntime",
-                           url: "https://download.onnxruntime.ai/pod-archive-onnxruntime-c-1.24.2.zip",
+                           // 2026-11-21 (trainome): download.onnxruntime.ai stopped serving (its certificate no longer matches the name); the same file,
+                           // checked by the same SHA256, from this repo's release
+                           url: "https://github.com/tomiqatar/onnxruntime-swift-package-manager/releases/download/1.24.2-trainome/pod-archive-onnxruntime-c-1.24.2.zip",
                            // SHA256 checksum
                            checksum: "f7100a992d2a8135168c8afd831e6a58b465349101982aa58b3e11d36e600b54")
     )
 }
-
-if let ext_pod_archive_path = ProcessInfo.processInfo.environment["ORT_EXTENSIONS_POD_LOCAL_PATH"] {
-    package.targets.append(Target.binaryTarget(name: "onnxruntime_extensions", path: ext_pod_archive_path))
-} else {
-    // ORT Extensions release
-    package.targets.append(
-        Target.binaryTarget(name: "onnxruntime_extensions",
-                            url: "https://download.onnxruntime.ai/pod-archive-onnxruntime-extensions-c-0.13.0.zip",
-                            // SHA256 checksum
-                            checksum: "346522d1171d4c99cb0908fa8e4e9330a4a6aad39cd83ce36eb654437b33e6b5")
-    )
-}
+// 2026-11-21 (trainome): ONNX Runtime Extensions left out: the app doesn't use it and its zip was only on download.onnxruntime.ai
